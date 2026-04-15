@@ -114,7 +114,53 @@ function showScreen(name, back = false) {
   const scrollable = next.querySelector('[class$="-content"]') || next;
   scrollable.scrollTop = 0;
   curScreen = name;
+
+  // Push a new history entry only when navigating forward (not on back animation)
+  if (!back) {
+    history.pushState({ screen: name }, '', '');
+  }
 }
+
+// Handle hardware/browser back button
+window.addEventListener('popstate', () => {
+  // 1. Close any open modal first
+  const openModal = document.querySelector('.modal-overlay:not(.hidden)');
+  if (openModal) {
+    openModal.classList.add('hidden');
+    history.pushState({ screen: curScreen }, '', ''); // restore entry consumed by this back
+    return;
+  }
+
+  // 2. Navigate between screens
+  switch (curScreen) {
+    case 'timer':
+      clearInterval(TS.interval);
+      releaseWakeLock();
+      // restore UI without pushing new entry (we're going "back")
+      SCREENS.timer.classList.remove('active');
+      SCREENS.detail.classList.add('active');
+      curScreen = 'detail';
+      renderDetail();
+      break;
+    case 'finish':
+      SCREENS.finish.classList.remove('active');
+      SCREENS.list.classList.add('active');
+      curScreen = 'list';
+      renderList();
+      break;
+    case 'detail':
+      SCREENS.detail.classList.remove('active');
+      SCREENS.list.classList.add('back-anim');
+      SCREENS.list.classList.add('active');
+      curScreen = 'list';
+      renderList();
+      break;
+    // 'list' — nothing to do, browser exits or goes back to real previous page
+  }
+});
+
+// Seed the initial history entry so there's always one to pop back to
+history.replaceState({ screen: 'list' }, '', '');
 
 // ─── DASHBOARD (List Screen) ───────────────────
 function renderList() {
@@ -876,3 +922,160 @@ function applyTheme(t) {
   }
 }
 applyTheme(localStorage.getItem('wt_theme') || 'default');
+
+// ─── I18N TRANSLATIONS ────────────────────────
+const TRANSLATIONS = {
+  en: {
+    dashboard: 'Dashboard', workouts: 'Workouts', history: 'History',
+    workoutLog: 'Workout log', exercises: 'exercises', totalMin: 'total min',
+    pauseMin: 'pause min', breakBetween: '⏸ Break between exercises', min: 'min',
+    startWorkout: 'Start workout', workoutCompleted: 'Workout\ncompleted!',
+    keepItUp: 'Great job, keep it up!', backToWorkouts: 'Back to workouts',
+    settings: 'Settings', appTheme: 'App Theme', language: 'Language', close: 'Close',
+    noWorkouts: 'No workouts.\nPress «+» to add.', noHistory: 'No history yet',
+    totalTime: 'Total time', addExercise: 'Add exercise',
+    plannedWorkouts: 'Planned workouts:', addWorkout: 'Add a workout', addBtn: 'Add',
+    nothingPlanned: 'Nothing planned yet.',
+    'break': 'Break', cycle: 'Cycle',
+  },
+  ru: {
+    dashboard: 'Главная', workouts: 'Тренировки', history: 'История',
+    workoutLog: 'Журнал тренировок', exercises: 'упражнений', totalMin: 'минут всего',
+    pauseMin: 'минут паузы', breakBetween: '⏸ Пауза между упражнениями', min: 'мин',
+    startWorkout: 'Начать тренировку', workoutCompleted: 'Тренировка\nзавершена!',
+    keepItUp: 'Отличная работа, продолжай!', backToWorkouts: 'К тренировкам',
+    settings: 'Настройки', appTheme: 'Тема приложения', language: 'Язык', close: 'Закрыть',
+    noWorkouts: 'Нет тренировок.\nНажми «+» чтобы добавить.', noHistory: 'История пуста',
+    totalTime: 'Общее время', addExercise: 'Добавить упражнение',
+    plannedWorkouts: 'Запланированные:', addWorkout: 'Добавить тренировку', addBtn: 'Добавить',
+    nothingPlanned: 'Ничего не запланировано.',
+    'break': 'Отдых', cycle: 'Круг',
+  },
+  de: {
+    dashboard: 'Dashboard', workouts: 'Workouts', history: 'Verlauf',
+    workoutLog: 'Trainingsprotokoll', exercises: 'Übungen', totalMin: 'Min gesamt',
+    pauseMin: 'Pause Min', breakBetween: '⏸ Pause zwischen Übungen', min: 'Min',
+    startWorkout: 'Training starten', workoutCompleted: 'Training\nabgeschlossen!',
+    keepItUp: 'Super, weiter so!', backToWorkouts: 'Zurück zu Workouts',
+    settings: 'Einstellungen', appTheme: 'App-Design', language: 'Sprache', close: 'Schließen',
+    noWorkouts: 'Keine Workouts.\n«+» drücken um hinzuzufügen.', noHistory: 'Noch kein Verlauf',
+    totalTime: 'Gesamtzeit', addExercise: 'Übung hinzufügen',
+    plannedWorkouts: 'Geplante Workouts:', addWorkout: 'Workout hinzufügen', addBtn: 'Hinzufügen',
+    nothingPlanned: 'Noch nichts geplant.',
+    'break': 'Pause', cycle: 'Runde',
+  }
+};
+
+let currentLang = localStorage.getItem('wt_lang') || 'en';
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS['en'][key] || key;
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const val = t(key);
+    // For elements with child nodes (like h2 with <br>), only update text content safely
+    if (el.children.length === 0) {
+      el.textContent = val;
+    } else {
+      // Replace innerHTML for elements like h2 with line breaks
+      el.innerHTML = val.replace(/\n/g, '<br/>');
+    }
+  });
+  // Sync radio selection
+  const langRadio = document.querySelector(`input[name="langSelector"][value="${currentLang}"]`);
+  if (langRadio) langRadio.checked = true;
+}
+
+document.querySelectorAll('input[name="langSelector"]').forEach(r => {
+  r.addEventListener('change', e => {
+    currentLang = e.target.value;
+    localStorage.setItem('wt_lang', currentLang);
+    applyLang();
+    // Re-render current view to update dynamically generated text
+    if (curScreen === 'list') renderList();
+    else if (curScreen === 'detail') renderDetail();
+  });
+});
+
+// Apply saved language on init
+applyLang();
+
+// ─── DEV EASTER EGG ─────────────────────────
+(function() {
+  let devClickCount = 0;
+  let devClickTimer = null;
+  const sig = document.getElementById('dev-signature');
+  const photoInput = document.getElementById('dev-photo-input');
+  const overlay = document.getElementById('modal-dev-photo');
+  const img = document.getElementById('dev-photo-img');
+
+  function showDevPhoto() {
+    const saved = localStorage.getItem('dev_photo');
+    if (saved) {
+      img.src = saved;
+      // re-trigger animation
+      img.style.animation = 'none';
+      img.offsetHeight; // reflow
+      img.style.animation = '';
+      overlay.classList.remove('hidden');
+    } else {
+      // First time: ask to pick a photo
+      photoInput.click();
+    }
+  }
+
+  sig.addEventListener('click', () => {
+    devClickCount++;
+    clearTimeout(devClickTimer);
+    // Reset counter after 2s of inactivity
+    devClickTimer = setTimeout(() => { devClickCount = 0; }, 2000);
+
+    // Visual pulse feedback on each click
+    sig.style.opacity = '0.9';
+    setTimeout(() => { sig.style.opacity = '0.5'; }, 150);
+
+    if (devClickCount >= 10) {
+      devClickCount = 0;
+      clearTimeout(devClickTimer);
+      showDevPhoto();
+    }
+  });
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      // Compress to square 400px for storage
+      const imgEl = new Image();
+      imgEl.onload = () => {
+        const SIZE = 400;
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE; canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        // Crop to center square
+        const side = Math.min(imgEl.width, imgEl.height);
+        const ox = (imgEl.width - side) / 2;
+        const oy = (imgEl.height - side) / 2;
+        ctx.drawImage(imgEl, ox, oy, side, side, 0, 0, SIZE, SIZE);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        try { localStorage.setItem('dev_photo', dataUrl); } catch(e) {}
+        img.src = dataUrl;
+        img.style.animation = 'none';
+        img.offsetHeight;
+        img.style.animation = '';
+        overlay.classList.remove('hidden');
+      };
+      imgEl.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    photoInput.value = '';
+  });
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.add('hidden');
+  });
+})();

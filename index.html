@@ -48,11 +48,11 @@
           </button>
         </div>
       </div>
-      <h1 class="screen-title">Dashboard</h1>
+      <h1 class="screen-title" data-i18n="dashboard">Dashboard</h1>
       <!-- Tabs -->
       <div class="tabs-nav">
-        <button class="tab-btn active" data-tab="list">Workouts</button>
-        <button class="tab-btn" data-tab="history">History</button>
+        <button class="tab-btn active" data-tab="list" data-i18n="workouts">Workouts</button>
+        <button class="tab-btn" data-tab="history" data-i18n="history">History</button>
       </div>
     </header>
     <main class="list-content">
@@ -84,7 +84,7 @@
           <div class="stat-pill"><span class="stat-num" id="hist-total-workouts">0</span><span class="stat-label">Workouts</span></div>
         </div>
 
-        <h3 class="history-list-title">Workout log</h3>
+        <h3 class="history-list-title" data-i18n="workoutLog">Workout log</h3>
         <div id="history-list" class="history-list"></div>
       </div>
     </main>
@@ -114,15 +114,15 @@
       <div class="stats-row">
         <div class="stat-pill" id="stat-exercises">
           <span class="stat-num">0</span>
-          <span class="stat-label">exercises</span>
+          <span class="stat-label" data-i18n="exercises">exercises</span>
         </div>
         <div class="stat-pill" id="stat-duration">
           <span class="stat-num">0</span>
-          <span class="stat-label">total min</span>
+          <span class="stat-label" data-i18n="totalMin">total min</span>
         </div>
         <div class="stat-pill" id="stat-break">
           <span class="stat-num">0</span>
-          <span class="stat-label">pause min</span>
+          <span class="stat-label" data-i18n="pauseMin">pause min</span>
         </div>
       </div>
 
@@ -139,11 +139,11 @@
 
       <!-- Break -->
       <div class="break-row">
-        <span class="break-label">⏸ Break between exercises</span>
+        <span class="break-label" data-i18n="breakBetween">⏸ Break between exercises</span>
         <div class="break-controls">
           <button class="break-adj" id="break-minus">−</button>
           <span id="break-value">10</span>
-          <span class="break-unit">min</span>
+          <span class="break-unit" data-i18n="min">min</span>
           <button class="break-adj" id="break-plus">+</button>
         </div>
       </div>
@@ -153,7 +153,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="5 3 19 12 5 21 5 3"/>
         </svg>
-        Start workout
+        <span data-i18n="startWorkout">Start workout</span>
       </button>
 
     </main>
@@ -253,8 +253,8 @@
   <div id="screen-finish" class="screen">
     <main class="finish-content">
       <div class="finish-icon">🏆</div>
-      <h2 class="finish-title">Workout<br/>completed!</h2>
-      <p class="finish-sub">Great job, keep it up!</p>
+      <h2 class="finish-title" data-i18n="workoutCompleted">Workout<br/>completed!</h2>
+      <p class="finish-sub" data-i18n="keepItUp">Great job, keep it up!</p>
 
       <div class="finish-stats-grid">
         <div class="finish-stat">
@@ -271,7 +271,7 @@
         </div>
       </div>
 
-      <button id="btn-finish-back" class="btn-start">
+      <button id="btn-finish-back" class="btn-start" data-i18n="backToWorkouts">
         Back to workouts
       </button>
     </main>
@@ -371,9 +371,9 @@
 <!-- ══ MODAL: Settings ══ -->
 <div id="modal-settings" class="modal-overlay hidden">
   <div class="modal">
-    <h3 class="modal-title">Settings</h3>
+    <h3 class="modal-title" data-i18n="settings">Settings</h3>
     
-    <div class="modal-label">App Theme</div>
+    <div class="modal-label" data-i18n="appTheme">App Theme</div>
     <div class="mode-selector" style="display:flex;">
       <label class="radio-label">
         <input type="radio" name="themeSelector" value="default" checked>
@@ -384,15 +384,34 @@
         Neon
       </label>
     </div>
+
+    <div class="modal-label" style="margin-top:1.2rem" data-i18n="language">Language</div>
+    <div class="mode-selector" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <label class="radio-label"><input type="radio" name="langSelector" value="en" checked> English</label>
+      <label class="radio-label"><input type="radio" name="langSelector" value="ru"> Русский</label>
+      <label class="radio-label"><input type="radio" name="langSelector" value="de"> Deutsch</label>
+    </div>
     
     <div class="modal-actions" style="margin-top:1.5rem">
-      <button id="btn-settings-close" class="btn-modal-primary" style="width:100%">Close</button>
+      <button id="btn-settings-close" class="btn-modal-primary" style="width:100%" data-i18n="close">Close</button>
     </div>
 
     <!-- Developer signature -->
-    <div style="text-align:center; font-size: 0.75rem; opacity: 0.5; margin-top: 1.5rem; letter-spacing: 0.5px;">
+    <!-- Developer signature easter egg -->
+    <div id="dev-signature" style="text-align:center; font-size: 0.75rem; opacity: 0.5; margin-top: 1.5rem; letter-spacing: 0.5px; cursor:default; user-select:none;">
       app developed by kyryl maliarevskyi
     </div>
+    <input type="file" id="dev-photo-input" accept="image/*" style="display:none">
+  </div>
+</div>
+
+<!-- Easter Egg: Dev Photo Overlay -->
+<div id="modal-dev-photo" class="modal-overlay hidden" style="z-index:999;">
+  <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:1rem;">
+    <img id="dev-photo-img" src="" alt="kyryl" style="width:220px; height:220px; object-fit:cover; border-radius:50%; border:4px solid var(--accent); box-shadow: 0 0 40px rgba(200,30,30,0.6); animation: devPhotoIn 0.5s cubic-bezier(.34,1.56,.64,1) both;">
+    <div style="color:var(--text); font-weight:700; font-size:1.1rem; text-shadow: 0 0 12px rgba(200,30,30,0.7);">Kyryl Maliarevskyi</div>
+    <div style="color:var(--muted); font-size:0.8rem;">Developer &amp; Creator</div>
+    <button onclick="document.getElementById('modal-dev-photo').classList.add('hidden')" style="margin-top:0.5rem; background:var(--accent); border:none; border-radius:20px; color:#fff; padding:0.5rem 1.5rem; font-size:0.9rem; font-weight:600; cursor:pointer;">Close</button>
   </div>
 </div>
 

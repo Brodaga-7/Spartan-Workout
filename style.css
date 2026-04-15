@@ -646,6 +646,15 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 4px; }
 
+/* ══ DEV EASTER EGG ══ */
+#dev-signature { transition: opacity 0.2s; }
+#dev-signature:hover { opacity: 0.75 !important; }
+@keyframes devPhotoIn {
+  from { opacity: 0; transform: scale(0.4) rotate(-15deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+#modal-dev-photo { align-items: center; justify-content: center; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); }
+
 /* ══ RESPONSIVE ══ */
 @media(min-width: 431px) {
   body { align-items: center; background: #060610; padding: 1.5rem; min-height: 100dvh; }
