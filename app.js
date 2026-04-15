@@ -53,7 +53,13 @@ let data = {
   history: []
 };
 
-function save() { try { localStorage.setItem('wt_data', JSON.stringify(data)); } catch(e){} }
+let _saveTimer = null;
+function save() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try { localStorage.setItem('wt_data', JSON.stringify(data)); } catch(e){}
+  }, 300);
+}
 function load() { 
   try { 
     const s = localStorage.getItem('wt_data'); 
@@ -191,7 +197,7 @@ function renderHistory() {
   if(!data.history.length) {
     hList.innerHTML = '<div class="empty-state" style="padding:2rem"><p>No history yet</p></div>';
   } else {
-    data.history.sort((a,b)=>b.ts - a.ts).forEach(h => {
+  const sorted = [...data.history].sort((a,b)=>b.ts - a.ts);
       const el = document.createElement('div');
       el.className = 'history-item';
       let d = new Date(h.ts);
@@ -244,8 +250,16 @@ function renderCalendar() {
   }
 }
 
-document.getElementById('cal-prev').addEventListener('click', () => { curDate.setMonth(curDate.getMonth()-1); renderCalendar(); });
-document.getElementById('cal-next').addEventListener('click', () => { curDate.setMonth(curDate.getMonth()+1); renderCalendar(); });
+document.getElementById('cal-prev').addEventListener('click', () => {
+  const d = new Date(curDate.getFullYear(), curDate.getMonth() - 1, 1);
+  curDate = d;
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  const d = new Date(curDate.getFullYear(), curDate.getMonth() + 1, 1);
+  curDate = d;
+  renderCalendar();
+});
 document.getElementById('btn-add-training').addEventListener('click', () => openTrainingModal(null));
 
 // ─── DETAIL SCREEN ───────────────────────────
@@ -346,16 +360,18 @@ document.getElementById('btn-add-exercise').addEventListener('click', () => open
 let editTId = null;
 let currentModalIcon = '';
 
-function updateAvatarPreview() {
-  const preview = document.getElementById('modal-avatar-preview');
-  if (currentModalIcon && currentModalIcon.startsWith('data:image')) {
-    preview.style.backgroundImage = `url('${currentModalIcon}')`;
-    preview.textContent = '';
+// Shared avatar preview function used by both training and exercise modals
+function setAvatarPreview(previewEl, value) {
+  if (value && value.startsWith('data:image')) {
+    previewEl.style.backgroundImage = `url('${value}')`;
+    previewEl.textContent = '';
   } else {
-    preview.style.backgroundImage = 'none';
-    preview.textContent = currentModalIcon;
+    previewEl.style.backgroundImage = 'none';
+    previewEl.textContent = value || '';
   }
 }
+function updateAvatarPreview()   { setAvatarPreview(document.getElementById('modal-avatar-preview'),    currentModalIcon);  }
+function updateExAvatarPreview() { setAvatarPreview(document.getElementById('modal-ex-avatar-preview'), currentExModalIcon); }
 
 document.getElementById('input-training-photo').addEventListener('change', function(e) {
   const file = e.target.files[0];
