@@ -65,6 +65,7 @@ function load() {
     const s = localStorage.getItem('wt_data'); 
     if (s) data = JSON.parse(s); 
     if(!data.history) data.history = [];
+    if(!data.schedule) data.schedule = {};
     data.trainings.forEach(t => t.exercises.forEach(e => { if(!e.mode) e.mode = 'time'; }));
   } catch(e){} 
 }
@@ -150,7 +151,7 @@ function renderList() {
         <div class="card-icon" style="${t.icon && t.icon.startsWith('data:image') ? `background-image:url('${t.icon}'); font-size:0;` : ''}">${t.icon && !t.icon.startsWith('data:image') ? t.icon : ''}</div>
         <div class="card-info">
           <div class="card-name">${esc(t.name)}</div>
-          <div class="card-meta">${t.exercises.length} ex · ${isCircuit ? (t.cycles||3)+' cycles' : totalSets+' sets'} · ~${totalMin} min · ⏸ ${t.breakMin}m</div>
+          <div class="card-meta">${t.exercises.length} ex · ${isCircuit ? (t.cycles||3)+' cycles' : totalSets+' sets'} · ~${totalMin} min</div>
         </div>
       </div>
       <div class="card-actions" style="position:relative; z-index:2;">
@@ -197,7 +198,8 @@ function renderHistory() {
   if(!data.history.length) {
     hList.innerHTML = '<div class="empty-state" style="padding:2rem"><p>No history yet</p></div>';
   } else {
-  const sorted = [...data.history].sort((a,b)=>b.ts - a.ts);
+    const sorted = [...data.history].sort((a,b)=>b.ts - a.ts);
+    sorted.forEach(h => {
       const el = document.createElement('div');
       el.className = 'history-item';
       let d = new Date(h.ts);
@@ -230,25 +232,100 @@ function renderCalendar() {
   if (firstDay === 0) firstDay = 7; // monday start
   const daysInMonth = new Date(y, m+1, 0).getDate();
 
+  const frag = document.createDocumentFragment();
   for(let i=1; i<firstDay; i++) {
     const el = document.createElement('div');
     el.className = 'cal-day empty';
-    grid.appendChild(el);
+    frag.appendChild(el);
   }
 
   const activeDays = new Set(data.history.map(h => {
-    let d = new Date(h.ts);
+    const d = new Date(h.ts);
     if(d.getFullYear()===y && d.getMonth()===m) return d.getDate();
     return -1;
   }));
 
   for(let i=1; i<=daysInMonth; i++) {
     const el = document.createElement('div');
-    el.className = 'cal-day' + (activeDays.has(i) ? ' active' : '');
+    const isoDateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    let c = 'cal-day';
+    if(activeDays.has(i)) c += ' active';
+    if(data.schedule[isoDateStr] && data.schedule[isoDateStr].length > 0) c += ' scheduled';
+    
+    el.className = c;
     el.textContent = i;
-    grid.appendChild(el);
+    el.dataset.date = isoDateStr;
+    el.addEventListener('click', () => openScheduleModal(isoDateStr));
+    frag.appendChild(el);
   }
+  grid.appendChild(frag);
 }
+
+// ─── SCHEDULE MODAL ─────────────────────────
+let curScheduleDate = null;
+function openScheduleModal(dateStr) {
+  curScheduleDate = dateStr;
+  const d = new Date(dateStr);
+  document.getElementById('modal-schedule-title').textContent = d.toLocaleDateString('en-US', { day:'numeric', month:'long', year:'numeric' });
+  renderScheduleList();
+  
+  const sel = document.getElementById('schedule-select');
+  sel.innerHTML = '<option value="" disabled selected>Select workout...</option>';
+  data.trainings.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+  
+  document.getElementById('modal-schedule').classList.remove('hidden');
+}
+
+function renderScheduleList() {
+  const list = document.getElementById('schedule-list');
+  list.innerHTML = '';
+  const arr = data.schedule[curScheduleDate] || [];
+  if (!arr.length) {
+    list.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; text-align:center; margin-top:0.5rem">Nothing planned yet.</div>';
+    return;
+  }
+  arr.forEach((tId, idx) => {
+    const t = data.trainings.find(x => x.id === tId);
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'space-between';
+    div.style.padding = '0.5rem';
+    div.style.background = 'rgba(255,255,255,0.05)';
+    div.style.borderRadius = '6px';
+    div.innerHTML = `
+      <span>${t ? esc(t.name) : 'Unknown'}</span>
+      <button class="btn-icon" style="width:28px; height:28px; border:none; background:transparent" title="Remove">✕</button>
+    `;
+    div.querySelector('button').addEventListener('click', () => {
+      data.schedule[curScheduleDate].splice(idx, 1);
+      save();
+      renderScheduleList();
+      renderCalendar();
+    });
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('btn-schedule-close').addEventListener('click', () => {
+  document.getElementById('modal-schedule').classList.add('hidden');
+});
+
+document.getElementById('btn-schedule-add').addEventListener('click', () => {
+  const tId = document.getElementById('schedule-select').value;
+  if (!tId) return;
+  if (!data.schedule[curScheduleDate]) data.schedule[curScheduleDate] = [];
+  data.schedule[curScheduleDate].push(tId);
+  save();
+  renderScheduleList();
+  renderCalendar();
+  document.getElementById('schedule-select').value = '';
+});
 
 document.getElementById('cal-prev').addEventListener('click', () => {
   const d = new Date(curDate.getFullYear(), curDate.getMonth() - 1, 1);
@@ -444,16 +521,6 @@ document.getElementById('input-training-name').addEventListener('keydown', e=>{ 
 let editExId = null;
 let currentExModalIcon = '';
 
-function updateExAvatarPreview() {
-  const preview = document.getElementById('modal-ex-avatar-preview');
-  if (currentExModalIcon && currentExModalIcon.startsWith('data:image')) {
-    preview.style.backgroundImage = `url('${currentExModalIcon}')`;
-    preview.textContent = '';
-  } else {
-    preview.style.backgroundImage = 'none';
-    preview.textContent = currentExModalIcon;
-  }
-}
 
 document.getElementById('input-ex-photo').addEventListener('change', function(e) {
   const file = e.target.files[0];
@@ -778,3 +845,34 @@ document.getElementById('btn-finish-back').addEventListener('click', () => { sho
 
 // ─── INITIALIZE ───────────────────────────────
 renderList();
+
+// ─── SETTINGS & THEME ──────────────────────
+document.getElementById('btn-settings').addEventListener('click', () => {
+  document.getElementById('modal-settings').classList.remove('hidden');
+});
+document.getElementById('btn-settings-close').addEventListener('click', () => {
+  document.getElementById('modal-settings').classList.add('hidden');
+});
+document.getElementById('modal-settings').addEventListener('click', e => {
+  if(e.target.id === 'modal-settings') e.target.classList.add('hidden');
+});
+
+const themeRadios = document.querySelectorAll('input[name="themeSelector"]');
+themeRadios.forEach(r => {
+  r.addEventListener('change', e => {
+    const t = e.target.value;
+    localStorage.setItem('wt_theme', t);
+    applyTheme(t);
+  });
+});
+
+function applyTheme(t) {
+  if (t === 'neon') {
+    document.body.classList.add('theme-neon');
+    document.querySelector('input[name="themeSelector"][value="neon"]').checked = true;
+  } else {
+    document.body.classList.remove('theme-neon');
+    document.querySelector('input[name="themeSelector"][value="default"]').checked = true;
+  }
+}
+applyTheme(localStorage.getItem('wt_theme') || 'default');
