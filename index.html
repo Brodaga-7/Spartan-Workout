@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spartan Workout</title>
+  <meta name="description" content="Smart workout timer with exercises, timers and pauses" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icon-512.png" />
+  <link rel="apple-touch-icon" href="icon-512.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══ SCREEN 1: Training List ══ -->
+  <div id="screen-list" class="screen active">
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="logo">
+          <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="16" fill="url(#g1)"/>
+            <path d="M8 16h2m12 0h2M10 16a6 6 0 0 1 12 0" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="2.5" fill="#fff"/>
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#7c6fff"/><stop offset="1" stop-color="#ff6b8a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>Spartan Workout</span>
+        </div>
+        <button id="btn-add-training" class="btn-icon" title="New Workout">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+      <h1 class="screen-title">Dashboard</h1>
+      <!-- Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="list">Workouts</button>
+        <button class="tab-btn" data-tab="history">History</button>
+      </div>
+    </header>
+    <main class="list-content">
+      <!-- Training List View -->
+      <div id="view-list" class="tab-view active">
+        <div id="training-list" class="training-cards"></div>
+        <div id="empty-state" class="empty-state hidden">
+          <div class="empty-icon">🏋️</div>
+          <p>No workouts.<br/>Press «+» to add.</p>
+        </div>
+      </div>
+      
+      <!-- History View -->
+      <div id="view-history" class="tab-view">
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <button id="cal-prev" class="btn-icon">◀</button>
+            <div id="cal-month-year" class="cal-title">April 2026</div>
+            <button id="cal-next" class="btn-icon">▶</button>
+          </div>
+          <div class="calendar-days">
+            <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+          </div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+
+        <div class="stats-overview">
+          <div class="stat-pill"><span class="stat-num" id="hist-total-time">0m</span><span class="stat-label">Total time</span></div>
+          <div class="stat-pill"><span class="stat-num" id="hist-total-workouts">0</span><span class="stat-label">Workouts</span></div>
+        </div>
+
+        <h3 class="history-list-title">Workout log</h3>
+        <div id="history-list" class="history-list"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ══ SCREEN 2: Training Detail ══ -->
+  <div id="screen-detail" class="screen">
+    <header class="app-header detail-header">
+      <div class="header-inner">
+        <button id="btn-back" class="btn-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <div id="detail-name" class="detail-title-header">Training 1</div>
+        <button id="btn-edit-training" class="btn-icon" title="Rename">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+    <main class="detail-content">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-pill" id="stat-exercises">
+          <span class="stat-num">0</span>
+          <span class="stat-label">exercises</span>
+        </div>
+        <div class="stat-pill" id="stat-duration">
+          <span class="stat-num">0</span>
+          <span class="stat-label">total min</span>
+        </div>
+        <div class="stat-pill" id="stat-break">
+          <span class="stat-num">0</span>
+          <span class="stat-label">pause min</span>
+        </div>
+      </div>
+
+      <!-- Exercise list -->
+      <div id="exercise-list" class="exercise-list"></div>
+
+      <!-- Add exercise -->
+      <button id="btn-add-exercise" class="btn-add-exercise">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add exercise
+      </button>
+
+      <!-- Break -->
+      <div class="break-row">
+        <span class="break-label">⏸ Break between exercises</span>
+        <div class="break-controls">
+          <button class="break-adj" id="break-minus">−</button>
+          <span id="break-value">10</span>
+          <span class="break-unit">min</span>
+          <button class="break-adj" id="break-plus">+</button>
+        </div>
+      </div>
+
+      <!-- Start -->
+      <button id="btn-start-training" class="btn-start">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Start workout
+      </button>
+
+    </main>
+  </div>
+
+  <!-- ══ SCREEN 3: Active Timer ══ -->
+  <div id="screen-timer" class="screen">
+    <header class="app-header">
+      <div class="header-inner">
+        <button id="btn-stop-training" class="btn-icon" title="Finish">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+          </svg>
+        </button>
+        <div id="timer-training-name" class="detail-title-header"></div>
+        <div style="width:40px"></div>
+      </div>
+    </header>
+
+    <main class="timer-content">
+
+      <!-- Overall progress -->
+      <div class="overall-progress">
+        <div class="overall-track">
+          <div id="overall-bar" class="overall-bar" style="width:0%"></div>
+        </div>
+        <div id="overall-label" class="overall-label">Step 1 of 1</div>
+      </div>
+
+      <!-- Phase pill -->
+      <div id="phase-label" class="phase-label">💪 Exercise</div>
+
+      <!-- Exercise name -->
+      <div id="timer-exercise-name" class="timer-exercise-name">Pull-ups</div>
+
+      <!-- Sets bubbles -->
+      <div id="sets-row" class="sets-row"></div>
+
+      <!-- Sets info -->
+      <div id="timer-sets-info" class="timer-sets-info">Set 1 of 3</div>
+
+      <!-- Ring Timer -->
+      <div class="ring-wrapper">
+        <svg class="ring-svg" viewBox="0 0 220 220">
+          <circle class="ring-bg" cx="110" cy="110" r="85"/>
+          <!-- glow (blurred duplicate) -->
+          <circle id="ring-glow" class="ring-glow" cx="110" cy="110" r="85"
+            stroke-dasharray="534.07" stroke-dashoffset="0"/>
+          <!-- main ring -->
+          <circle id="ring-progress" class="ring-fg" cx="110" cy="110" r="85"
+            stroke-dasharray="534.07" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-inner">
+          <div id="timer-seconds" class="timer-seconds">10</div>
+          <div id="timer-label-sec" class="timer-label-sec">seconds</div>
+        </div>
+      </div>
+
+      <button id="btn-manual-done" class="btn-manual-done" style="display:none">DONE</button>
+
+      <!-- Next exercise preview -->
+      <div id="next-preview" class="next-preview">Next: <span>—</span></div>
+
+      <!-- Controls -->
+      <div class="timer-controls">
+        <button id="btn-prev-set" class="ctrl-btn secondary" title="Previous step">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <button id="btn-pause-timer" class="ctrl-btn primary">
+          <svg id="pause-icon" width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" rx="1"/>
+            <rect x="14" y="4" width="4" height="16" rx="1"/>
+          </svg>
+          <svg id="play-icon" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        </button>
+        <button id="btn-next-set" class="ctrl-btn secondary" title="Next step">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Step dots -->
+      <div id="step-indicator" class="step-indicator"></div>
+
+    </main>
+  </div>
+
+  <!-- ══ SCREEN 4: Finish ══ -->
+  <div id="screen-finish" class="screen">
+    <main class="finish-content">
+      <div class="finish-icon">🏆</div>
+      <h2 class="finish-title">Workout<br/>completed!</h2>
+      <p class="finish-sub">Great job, keep it up!</p>
+
+      <div class="finish-stats-grid">
+        <div class="finish-stat">
+          <div class="finish-stat-num" id="finish-ex-count">0</div>
+          <div class="finish-stat-label">exercises</div>
+        </div>
+        <div class="finish-stat">
+          <div class="finish-stat-num" id="finish-set-count">0</div>
+          <div class="finish-stat-label">sets</div>
+        </div>
+        <div class="finish-stat">
+          <div class="finish-stat-num" id="finish-time">0s</div>
+          <div class="finish-stat-label">time</div>
+        </div>
+      </div>
+
+      <button id="btn-finish-back" class="btn-start">
+        Back to workouts
+      </button>
+    </main>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══ MODAL: New / Edit Training ══ -->
+<div id="modal-training" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 class="modal-title" id="modal-training-title">New workout</h3>
+    <label class="modal-label">Name
+      <input id="input-training-name" class="modal-input" type="text" placeholder="e.g., Training 1" maxlength="40"/>
+    </label>
+    <div class="modal-actions">
+      <button id="btn-modal-cancel" class="btn-modal-secondary">Cancel</button>
+      <button id="btn-modal-save"   class="btn-modal-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Add / Edit Exercise ══ -->
+<div id="modal-exercise" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 class="modal-title" id="modal-exercise-title">Add exercise</h3>
+    <label class="modal-label">Name
+      <input id="input-exercise-name" class="modal-input" type="text" placeholder="e.g., Pull-ups" maxlength="40"/>
+    </label>
+    <div class="modal-row mode-selector">
+      <label class="modal-label radio-label"><input type="radio" name="ex-mode" value="time" checked> Timed</label>
+      <label class="modal-label radio-label"><input type="radio" name="ex-mode" value="reps"> Reps (Manual)</label>
+    </div>
+    <div class="modal-row">
+      <label class="modal-label half">Sets
+        <input id="input-exercise-sets" class="modal-input" type="number" min="1" max="99" value="3"/>
+      </label>
+      <label class="modal-label half" id="label-secs">Seconds / set
+        <input id="input-exercise-secs" class="modal-input" type="number" min="5" max="3600" value="30"/>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button id="btn-ex-cancel" class="btn-modal-secondary">Cancel</button>
+      <button id="btn-ex-save"   class="btn-modal-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Confirm Delete ══ -->
+<div id="modal-confirm" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 class="modal-title">Delete?</h3>
+    <p id="confirm-text" class="confirm-text"></p>
+    <div class="modal-actions">
+      <button id="btn-confirm-no"  class="btn-modal-secondary">Cancel</button>
+      <button id="btn-confirm-yes" class="btn-modal-danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

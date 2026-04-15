@@ -1,0 +1,17 @@
+{
+  "name": "WorkOut Timer",
+  "short_name": "WorkOut",
+  "description": "Умный таймер тренировок с упражнениями и паузами",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#09090f",
+  "theme_color": "#7c6fff",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
